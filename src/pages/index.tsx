@@ -19,6 +19,7 @@ import {
   TablePagination,
   TableRow,
   TextField,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import { FeatureEnum, PeriodEnum } from "@/interfaces";
@@ -186,19 +187,6 @@ export default function Home() {
             >
               Search
             </Button>
-            {isLoading && (
-              <CircularProgress
-                size={24}
-                sx={{
-                  color: "green",
-                  position: "absolute",
-                  top: "50%",
-                  left: "50%",
-                  marginTop: "-12px",
-                  marginLeft: "-12px",
-                }}
-              />
-            )}
           </Box>
           <Box
             sx={{ width: "100%", display: "flex", justifyContent: "center" }}
@@ -221,14 +209,30 @@ export default function Home() {
                   >
                     <TableHead>
                       <TableRow>
-                        <TableCell>Symbol</TableCell>
-                        <TableCell align="right">Price</TableCell>
-                        <TableCell align="right">
-                          Annually Dividend Yield
+                        <TableCell>
+                          <Tooltip title="The unique identifier for each stock or ETF">
+                            <span>Symbol</span>
+                          </Tooltip>
                         </TableCell>
-                        <TableCell align="right">Deposit (quantity)</TableCell>
                         <TableCell align="right">
-                          Deposit (total amount)
+                          <Tooltip title="The current price of the stock or ETF">
+                            <span>Price</span>
+                          </Tooltip>
+                        </TableCell>
+                        <TableCell align="right">
+                          <Tooltip title="The yield returned annually as dividends">
+                            <span>Annually Dividend Yield</span>
+                          </Tooltip>
+                        </TableCell>
+                        <TableCell align="right">
+                          <Tooltip title="The number of shares you would get for your deposit">
+                            <span>Deposit (quantity)</span>
+                          </Tooltip>
+                        </TableCell>
+                        <TableCell align="right">
+                          <Tooltip title="The total amount of money required for the deposit">
+                            <span>Deposit (total amount)</span>
+                          </Tooltip>
                         </TableCell>
                       </TableRow>
                     </TableHead>
