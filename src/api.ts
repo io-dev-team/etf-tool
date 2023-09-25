@@ -52,7 +52,9 @@ const API = {
 export const GetList = async (
   feature: string,
   period: string,
-  page: number
+  page: number,
+  sortBy: string,
+  orderBy: string
 ) => {
   const filter = {};
 
@@ -79,7 +81,7 @@ export const GetList = async (
       // @ts-ignore
       collection: Tables[feature],
       sort_by: {
-        DividendYieldCurrent: "desc",
+        [sortBy]: orderBy,
       },
       theme: "FIN::L2(High Yield Dividend)",
       modal_key: null,
@@ -124,6 +126,7 @@ export const GetList = async (
           symbol: name,
           price,
           dividendYield,
+          marketCap,
         });
       }
     });

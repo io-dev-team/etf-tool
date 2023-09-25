@@ -12,3 +12,13 @@ export enum FeatureEnum {
   Etf = "Etf",
   Stock = "Stock",
 }
+
+export enum SortBy {
+  MarketCap = "MarketCap",
+  DividendYield = "DividendYieldCurrent",
+}
+
+export enum OrderBy {
+  Asc = "asc",
+  Desc = "desc",
+}

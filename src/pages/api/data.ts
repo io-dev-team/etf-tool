@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { GetList } from "../../api";
-import { FeatureEnum, PeriodEnum } from "@/interfaces";
+import { FeatureEnum, OrderBy, PeriodEnum, SortBy } from "@/interfaces";
 
 type Data = {
   data: {
@@ -15,10 +15,12 @@ export default async function handler(
   res: NextApiResponse<Data>
 ) {
   try {
-    const { feature, period, page } = req.query;
+    const { feature, period, page, sortBy, orderBy } = req.query;
     const asset = (feature as string) || FeatureEnum.Etf;
     const freq = (period as string) || PeriodEnum.All;
-    const data = await GetList(asset, freq, page ? +page : 1);
+    const sort = (sortBy as string) || SortBy.DividendYield;
+    const order = (orderBy as string) || OrderBy.Desc;
+    const data = await GetList(asset, freq, page ? +page : 1, sort, order);
     res.status(200).json({ data });
   } catch (error) {
     res.status(500).json({ data: null });

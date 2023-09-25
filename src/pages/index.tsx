@@ -1,15 +1,13 @@
 import Head from "next/head";
 import { Header } from "@/components/Header";
+import { styled } from "@mui/material/styles";
 import {
   Box,
   Button,
   CircularProgress,
   Container,
   FormControl,
-  InputAdornment,
-  InputLabel,
   MenuItem,
-  OutlinedInput,
   Paper,
   Table,
   TableBody,
@@ -22,7 +20,9 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { FeatureEnum, PeriodEnum } from "@/interfaces";
+import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
+import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
+import { FeatureEnum, OrderBy, PeriodEnum, SortBy } from "@/interfaces";
 import { useEffect, useState } from "react";
 import axios from "axios";
 
@@ -30,22 +30,42 @@ function formatPrice(x: number) {
   return x ? x.toString().replace(/(\d)(?=(\d\d\d)+([^\d]|$))/g, "$1,") : "";
 }
 
+const FormRoot = styled("form")(({ theme }) => ({
+  my: 3,
+  "& > :not(style)": { m: 1, width: "25ch" },
+  textAlign: "center",
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "flex-end",
+  flexDirection: "row",
+  gap: "20px",
+  [theme.breakpoints.down("md")]: {
+    flexDirection: "column",
+  },
+  [theme.breakpoints.up("md")]: {
+    flexDirection: "row",
+  },
+}));
+
 interface IStock {
   symbol: string;
   price: string;
   dividendYield: string;
   qty: number;
   deposit: string;
-  income: number;
+  marketCap: string;
 }
 type Data = { list: IStock[]; count: number } | null;
 export default function Home() {
-  const [amount, setAmount] = useState(1000);
+  const [amount, setAmount] = useState(100);
+  const [amountType, setAmountType] = useState(PeriodEnum.Monthly);
   const [period, setPeriod] = useState(PeriodEnum.All);
   const [feature, setFeature] = useState(FeatureEnum.Etf);
   const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [data, setData] = useState<Data>(null);
+  const [sortBy, setSortBy] = useState(SortBy.DividendYield);
+  const [orderBy, setOrderBy] = useState(OrderBy.Desc);
 
   const onSearch = async () => {
     setIsLoading(true);
@@ -56,6 +76,8 @@ export default function Home() {
           feature,
           period,
           page,
+          sortBy,
+          orderBy,
         },
       });
 
@@ -69,13 +91,13 @@ export default function Home() {
             (price / 100) *
             +item.dividendYield.split("%")[0]
           ).toFixed(4);
-          const income = amount;
-          const count = +(amount / dividend).toFixed(2);
-          const deposit = "$" + formatPrice(+(price * count).toFixed(0));
+          let amountAnnually =
+            amountType === PeriodEnum.Monthly ? amount * 12 : amount;
+          const count = +(amountAnnually / dividend).toFixed(2);
+          const deposit = "$" + formatPrice(+(price * count).toFixed(2));
           return {
             ...item,
             price: "$" + formatPrice(+price),
-            income,
             deposit,
             qty: count,
           };
@@ -89,7 +111,34 @@ export default function Home() {
 
   useEffect(() => {
     onSearch();
-  }, [page]);
+  }, [page, sortBy, orderBy]);
+
+  useEffect(() => {
+    setData((data) => {
+      if (!data) return null;
+
+      return {
+        count: data.count,
+        list: data.list.map((item: IStock) => {
+          const price = +item.price.split("$")[1];
+          const dividend = +(
+            (price / 100) *
+            +item.dividendYield.split("%")[0]
+          ).toFixed(4);
+          let amountAnnually =
+            amountType === PeriodEnum.Monthly ? amount * 12 : amount;
+          const count = +(amountAnnually / dividend).toFixed(2);
+          const deposit = "$" + formatPrice(+(price * count).toFixed(2));
+          return {
+            ...item,
+            price: "$" + formatPrice(+price),
+            deposit,
+            qty: count,
+          };
+        }),
+      };
+    });
+  }, [amount, amountType]);
 
   return (
     <>
@@ -118,31 +167,46 @@ export default function Home() {
           <Typography variant="h3" gutterBottom>
             Tool for investing in etf and stocks
           </Typography>
-          <Box
-            component="form"
-            sx={{
-              my: 3,
-              "& > :not(style)": { m: 1, width: "25ch" },
-              textAlign: "center",
-            }}
-            noValidate
-            autoComplete="off"
-          >
-            <FormControl fullWidth sx={{ m: 1 }}>
-              <InputLabel htmlFor="outlined-adornment-amount">
-                The income you want (annualy)
-              </InputLabel>
-              <OutlinedInput
-                value={amount}
-                onChange={(e) => setAmount(+e.target.value)}
-                id="outlined-adornment-amount"
-                startAdornment={
-                  <InputAdornment position="start">$</InputAdornment>
-                }
-                label="The income you want (annualy)"
-              />
-            </FormControl>
-            <FormControl fullWidth sx={{ m: 1 }}>
+          <FormRoot noValidate autoComplete="off">
+            <Box>
+              <FormControl fullWidth sx={{ my: 2 }}>
+                <TextField
+                  value={amount}
+                  onChange={(e) => setAmount(+e.target.value)}
+                  id="outlined-adornment-amount"
+                  inputProps={{
+                    style: { textAlign: "center" },
+                    inputMode: "numeric",
+                    pattern: "[0-9]*",
+                    step: 10,
+                    min: 10,
+                  }}
+                  type="number"
+                  label="The income you want $"
+                />
+              </FormControl>
+              <FormControl fullWidth>
+                <TextField
+                  select
+                  label="Income period"
+                  value={amountType}
+                  onChange={(e) => {
+                    setAmountType(e.target.value as PeriodEnum);
+                  }}
+                >
+                  {Object.values(PeriodEnum)
+                    .filter((v) =>
+                      [PeriodEnum.Monthly, PeriodEnum.Yearly].includes(v)
+                    )
+                    .map((v) => (
+                      <MenuItem key={v} value={v}>
+                        {v}
+                      </MenuItem>
+                    ))}
+                </TextField>
+              </FormControl>
+            </Box>
+            <FormControl fullWidth>
               <TextField
                 select
                 label="Dividend payment period"
@@ -159,7 +223,7 @@ export default function Home() {
                 ))}
               </TextField>
             </FormControl>
-            <FormControl fullWidth sx={{ m: 1 }}>
+            <FormControl fullWidth>
               <TextField
                 select
                 label="Select feature"
@@ -176,17 +240,33 @@ export default function Home() {
                 ))}
               </TextField>
             </FormControl>
-          </Box>
-          <Box sx={{ m: 1, position: "relative" }}>
+          </FormRoot>
+          <Box sx={{ m: 2, display: "flex", gap: "10px" }}>
             <Button
               size="large"
               variant="outlined"
-              sx={{}}
               disabled={isLoading}
-              onClick={onSearch}
+              onClick={() => {
+                setPage(1);
+                onSearch();
+              }}
             >
               Search
             </Button>
+            {/* <Button
+              size="large"
+              color="warning"
+              variant="outlined"
+              disabled={isLoading}
+              onClick={() => {
+                setPage(1);
+                setSortBy(SortBy.DividendYield);
+                setOrderBy(OrderBy.Desc);
+                onSearch();
+              }}
+            >
+              Reset
+            </Button> */}
           </Box>
           <Box
             sx={{ width: "100%", display: "flex", justifyContent: "center" }}
@@ -219,9 +299,72 @@ export default function Home() {
                             <span>Price</span>
                           </Tooltip>
                         </TableCell>
-                        <TableCell align="right">
+                        <TableCell>
+                          <Tooltip title="The market cap of the stock or ETF">
+                            <span
+                              onClick={() => {
+                                if (sortBy === SortBy.MarketCap) {
+                                  setOrderBy(
+                                    orderBy === OrderBy.Desc
+                                      ? OrderBy.Asc
+                                      : OrderBy.Desc
+                                  );
+                                } else {
+                                  setSortBy(SortBy.MarketCap);
+                                  setOrderBy(OrderBy.Desc);
+                                }
+                              }}
+                              style={{
+                                display: "flex",
+                                justifyContent: "flex-end",
+                                alignItems: "center",
+                              }}
+                            >
+                              {sortBy === SortBy.MarketCap && (
+                                <>
+                                  {orderBy === OrderBy.Desc ? (
+                                    <ArrowDownwardIcon />
+                                  ) : (
+                                    <ArrowUpwardIcon />
+                                  )}
+                                </>
+                              )}{" "}
+                              Market cap
+                            </span>
+                          </Tooltip>
+                        </TableCell>
+                        <TableCell>
                           <Tooltip title="The yield returned annually as dividends">
-                            <span>Annually Dividend Yield</span>
+                            <span
+                              onClick={() => {
+                                if (sortBy === SortBy.DividendYield) {
+                                  setOrderBy(
+                                    orderBy === OrderBy.Desc
+                                      ? OrderBy.Asc
+                                      : OrderBy.Desc
+                                  );
+                                } else {
+                                  setSortBy(SortBy.DividendYield);
+                                  setOrderBy(OrderBy.Desc);
+                                }
+                              }}
+                              style={{
+                                display: "flex",
+                                justifyContent: "flex-end",
+                                alignItems: "center",
+                              }}
+                            >
+                              {sortBy === SortBy.DividendYield && (
+                                <>
+                                  {orderBy === OrderBy.Desc ? (
+                                    <ArrowDownwardIcon />
+                                  ) : (
+                                    <ArrowUpwardIcon />
+                                  )}
+                                </>
+                              )}{" "}
+                              Annually Dividend Yield
+                            </span>
                           </Tooltip>
                         </TableCell>
                         <TableCell align="right">
@@ -249,6 +392,7 @@ export default function Home() {
                             {item.symbol}
                           </TableCell>
                           <TableCell align="right">{item.price}</TableCell>
+                          <TableCell align="right">{item.marketCap}</TableCell>
                           <TableCell align="right">
                             {item.dividendYield}
                           </TableCell>
