@@ -68,6 +68,29 @@ export default function Home() {
   const [sortBy, setSortBy] = useState(SortBy.DividendYield);
   const [orderBy, setOrderBy] = useState(OrderBy.Desc);
 
+  const setDataFN = (list: IStock[], count: any) => {
+    setData({
+      count,
+      list: list.map((item: IStock) => {
+        const price = +item.price.split("$")[1];
+        const dividend = +(
+          (price / 100) *
+          +item.dividendYield.split("%")[0]
+        ).toFixed(4);
+        let amountAnnually =
+          amountType === PeriodEnum.Monthly ? amount * 12 : amount;
+        const count = +(amountAnnually / dividend).toFixed(2);
+        const deposit = "$" + formatPrice(+(price * count).toFixed(0)) + ".00";
+        return {
+          ...item,
+          price: "$" + formatPrice(+price),
+          deposit,
+          qty: count,
+        };
+      }),
+    });
+  };
+
   const onSearch = async () => {
     setIsLoading(true);
 
@@ -84,26 +107,7 @@ export default function Home() {
 
       const { list, count } = resp.data.data;
 
-      setData({
-        count,
-        list: list.map((item: IStock) => {
-          const price = +item.price.split("$")[1];
-          const dividend = +(
-            (price / 100) *
-            +item.dividendYield.split("%")[0]
-          ).toFixed(4);
-          let amountAnnually =
-            amountType === PeriodEnum.Monthly ? amount * 12 : amount;
-          const count = +(amountAnnually / dividend).toFixed(2);
-          const deposit = "$" + formatPrice(+(price * count).toFixed(2));
-          return {
-            ...item,
-            price: "$" + formatPrice(+price),
-            deposit,
-            qty: count,
-          };
-        }),
-      });
+      setDataFN(list, count);
     } catch (error) {
     } finally {
       setIsLoading(false);
@@ -115,30 +119,9 @@ export default function Home() {
   }, [page, sortBy, orderBy]);
 
   useEffect(() => {
-    setData((data) => {
-      if (!data) return null;
-
-      return {
-        count: data.count,
-        list: data.list.map((item: IStock) => {
-          const price = +item.price.split("$")[1];
-          const dividend = +(
-            (price / 100) *
-            +item.dividendYield.split("%")[0]
-          ).toFixed(4);
-          let amountAnnually =
-            amountType === PeriodEnum.Monthly ? amount * 12 : amount;
-          const count = +(amountAnnually / dividend).toFixed(2);
-          const deposit = "$" + formatPrice(+(price * count).toFixed(2));
-          return {
-            ...item,
-            price: "$" + formatPrice(+price),
-            deposit,
-            qty: count,
-          };
-        }),
-      };
-    });
+    if (data) {
+      setDataFN(data.list, data.count);
+    }
   }, [amount, amountType]);
 
   return (
@@ -314,6 +297,7 @@ export default function Home() {
                                   setSortBy(SortBy.MarketCap);
                                   setOrderBy(OrderBy.Desc);
                                 }
+                                setPage(1);
                               }}
                               style={{
                                 display: "flex",
@@ -348,6 +332,7 @@ export default function Home() {
                                   setSortBy(SortBy.DividendYield);
                                   setOrderBy(OrderBy.Desc);
                                 }
+                                setPage(1);
                               }}
                               style={{
                                 display: "flex",
