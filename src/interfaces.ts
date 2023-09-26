@@ -1,7 +1,7 @@
 export enum PeriodEnum {
   All = "All",
   Monthly = "Monthly",
-  BiMonthly = "Bi-Monthly",
+  // BiMonthly = "Bi-Monthly",
   Quartely = "Quartely",
   SemiAnnually = "Semi Annually",
   Yearly = "Annually",

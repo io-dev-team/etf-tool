@@ -38,7 +38,7 @@ const Tables = {
 };
 const FreqValues = {
   [PeriodEnum.Monthly]: "12",
-  [PeriodEnum.BiMonthly]: "6",
+  // [PeriodEnum.BiMonthly]: "6",
   [PeriodEnum.SemiAnnually]: "2",
   [PeriodEnum.Quartely]: "4",
   [PeriodEnum.Yearly]: "1",
@@ -112,18 +112,21 @@ export const GetList = async (
 
     rows.each((index, element) => {
       const row = $(element);
-      const name = row.find(".m-table-body-subtext span").eq(0).text();
+      // console.log(row.toString())
+      const symbol = row.find(".m-table-body-subtext span").eq(0).text();
+      const name = row.find(".m-table-body-link-text").text();
       const price = row.find(".m-table-body-text").eq(0).text();
       const marketCap = row.find(".m-table-body-text").eq(1).text();
       const dividendYield = row.find(".m-table-body-text").eq(2).text();
       const exDivDate = row.find(".m-table-body-text").eq(3).text();
 
-      if (name) {
+      if (symbol) {
         // console.log(
         //   `Name: ${name}, Price: ${price}, Dividend Yield: ${dividendYield}`
         // );
         list.push({
-          symbol: name,
+          name,
+          symbol,
           price,
           dividendYield,
           marketCap,

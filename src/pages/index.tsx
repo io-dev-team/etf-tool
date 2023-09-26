@@ -48,6 +48,7 @@ const FormRoot = styled("form")(({ theme }) => ({
 }));
 
 interface IStock {
+  name: string;
   symbol: string;
   price: string;
   dividendYield: string;
@@ -389,7 +390,9 @@ export default function Home() {
                           }}
                         >
                           <TableCell component="th" scope="row">
-                            {item.symbol}
+                            <Tooltip title={item.name}>
+                              <span>{item.symbol}</span>
+                            </Tooltip>
                           </TableCell>
                           <TableCell align="right">{item.price}</TableCell>
                           <TableCell align="right">{item.marketCap}</TableCell>
